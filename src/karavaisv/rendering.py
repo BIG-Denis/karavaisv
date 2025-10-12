@@ -1,5 +1,6 @@
 import re
 import copy
+import time
 
 
 KSV_META_FLAGS: set[str] = {"if", "elif", "else", "endif", "for", "endfor"}
@@ -36,12 +37,12 @@ def is_meta_in_block(content: str) -> bool:
 
 def render_single_line(line: str, variables :dict) -> str:
     inline_templates: list[str] = re.findall(r"\~/.*?/\~", line)
-    exec_locals: dict = locals()
+    exec_locals: dict = variables | locals()
     templated_line: str = copy.copy(line) + '\n'
 
     if len(inline_templates) > 0:
         for inline_template in inline_templates:
-            exec(f"templated_line = str({inline_template[3:-3]})", globals=globals(), locals=exec_locals)
+            exec(f"templated_line = str({inline_template[3:-3]})", locals=exec_locals)
             templated_line = templated_line.replace(inline_template, exec_locals['templated_line'])
 
     return templated_line
@@ -67,7 +68,8 @@ def render_single_block(content: str, variables: dict) -> str:
     all_lines: list[str] = content.split('\n')[:-1]
     executable_content: str = ""
     executed_content: str = ""
-    exec_locals: dict = locals()
+    all_locals: dict = variables | locals()
+    exec_locals: dict = locals() | all_locals
     block_contains_meta: bool = is_meta_in_block(content)
 
     for line in all_lines:
@@ -78,7 +80,7 @@ def render_single_block(content: str, variables: dict) -> str:
             if block_contains_meta:
                 executable_content += 4 * ' '
             executable_content += "executed_content += "
-            executable_content += f'render_single_line("{line}", exec_locals)'
+            executable_content += f'render_single_line("{line}", all_locals | locals())'
 
         executable_content += '\n'
 
@@ -134,9 +136,19 @@ def render_substring(content: str, variables: dict) -> str:
     return rendered_content
 
 
-def render(content: str, variables: dict) -> str:
-    print("Info: Started rendering...")
+def render(content: str, variables: dict, filename: str=None) -> str:
+    start_time: float = time.time()
+    if filename is not None:
+        print(f"Info: Started rendering '{filename}'...")
+    else:
+        print("Info: Started rendering...")
+
     rendered_code: str = render_substring(content, variables)
-    print("Info: Rendering completed.")
+
+    end_time: float = time.time()
+    if filename is not None:
+        print(f"Info: Rendering of '{filename}' completed in {end_time - start_time:.2f} seconds.")
+    else:
+        print(f"Info: Rendering completed in {end_time - start_time:.2f} seconds.")
 
     return rendered_code
