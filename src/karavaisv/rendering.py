@@ -80,7 +80,7 @@ def render_single_block(content: str, variables: dict) -> str:
             if block_contains_meta:
                 executable_content += 4 * ' '
             executable_content += "executed_content += "
-            executable_content += f'render_single_line("{line}", all_locals | locals())'
+            executable_content += f'render_single_line("""{line}""", all_locals | locals())'
 
         executable_content += '\n'
 
