@@ -10,17 +10,17 @@ KSV_META_COLONS: set[str] = {"if", "elif", "else", "for"}
 
 
 def check_line_for_meta(line: str) -> str:
-    if re.match(r"\s*\~\$\sif.*\$\~.*", line):      # ksv if
+    if re.match(r"\s*\~\$\s*if.*\$\~.*", line):      # ksv if
         return "if"
-    if re.match(r"\s*\~\$\selif.*\$\~.*", line):    # ksv elif
+    if re.match(r"\s*\~\$\s*elif.*\$\~.*", line):    # ksv elif
         return "elif"
-    if re.match(r"\s*\~\$\selse.*\$\~.*", line):    # ksv else
+    if re.match(r"\s*\~\$\s*else.*\$\~.*", line):    # ksv else
         return "else"
-    if re.match(r"\s*\~\$\sendif.*\$\~.*", line):   # ksv endif
+    if re.match(r"\s*\~\$\s*endif.*\$\~.*", line):   # ksv endif
         return "endif"
-    if re.match(r"\s*\~\$\sfor.*\$\~.*", line):     # ksv for
+    if re.match(r"\s*\~\$\s*for.*\$\~.*", line):     # ksv for
         return "for"
-    if re.match(r"\s*\~\$\sendfor.*\$\~.*", line):  # ksv endfor
+    if re.match(r"\s*\~\$\s*endfor.*\$\~.*", line):  # ksv endfor
         return "endfor"
     return None
 
@@ -91,7 +91,6 @@ def render_single_block(content: str, variables: dict) -> str:
 
 
 def divide_into_blocks(content: str) -> list[str]:
-    meta_flags_seq: list[str] = []
     depth_level: int = 0
     ksv_blocks: list[str] = []
     line_skip: bool = False
@@ -99,17 +98,18 @@ def divide_into_blocks(content: str) -> list[str]:
 
     for i, line in enumerate(all_lines):
         meta_key: str = check_line_for_meta(line)
-        meta_flags_seq.append(meta_key)
         line_skip = False
 
         if meta_key in KSV_META_OPENINGS:
             depth_level += 1
-            ksv_blocks.append("")
+            if depth_level == 1:
+                ksv_blocks.append("")
 
         if meta_key in KSV_META_CLOSURES:
             depth_level -= 1
-            ksv_blocks.append("")
-            line_skip = True
+            if depth_level == 0:
+                ksv_blocks.append("")
+                line_skip = True
 
         if not line_skip:
             if len(ksv_blocks) == 0:
