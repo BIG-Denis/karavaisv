@@ -82,7 +82,7 @@ def execute_content(content: str, parameters: dict) -> str:
     return rendered_content
 
 
-def render(content: str, parameters: dict, filename: str=None, logging: bool = True) -> str:
+def render(content: str, parameters: dict, logging: bool = True, filename: str=None) -> str:
     """
     Render the given content with KaravaiSV templating engine with the provided parameters.
 
@@ -92,7 +92,8 @@ def render(content: str, parameters: dict, filename: str=None, logging: bool = T
     Args:
         content (str): The content to be rendered.
         parameters (dict): A dictionary of parameters to be used in the rendering process.
-        filename (str, optional): The name of the file being rendered, used for logging purposes.
+        logging (bool, optional): If True, logs the rendering process and time taken. Defaults to True.
+        filename (str, optional): The name of the file being rendered, used for logging purposes. Defaults to None. Makes sense only if logging is True.
 
     Returns:
         str: The rendered content as a string.
