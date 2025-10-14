@@ -2,28 +2,26 @@ import re
 import copy
 import time
 
-from karavaisv.util_funcs import print_render_info_start, print_render_info_end
+from .util_funcs import print_render_info_start, print_render_info_end
 
 
-KSV_META_FLAGS: set[str] = {"if", "elif", "else", "endif", "for", "endfor"}
+KSV_META_FLAGS: set[str] = {"if", "elif", "else", "for", "end"}
 KSV_META_OPENINGS: set[str] = {"if", "for"}
-KSV_META_CLOSURES: set[str] = {"endif", "endfor"}
+KSV_META_CLOSURES: set[str] = {"end",}
 KSV_META_COLONS: set[str] = {"if", "elif", "else", "for"}
 
 
 def check_line_for_meta(line: str) -> str:
-    if re.match(r"\s*\~\$\s*if.*\$\~.*", line):      # ksv if
+    if re.match(r"\s*\~\$\s*if.*\$\~.*", line):    # ksv if
         return "if"
-    if re.match(r"\s*\~\$\s*elif.*\$\~.*", line):    # ksv elif
+    if re.match(r"\s*\~\$\s*elif.*\$\~.*", line):  # ksv elif
         return "elif"
-    if re.match(r"\s*\~\$\s*else.*\$\~.*", line):    # ksv else
+    if re.match(r"\s*\~\$\s*else.*\$\~.*", line):  # ksv else
         return "else"
-    if re.match(r"\s*\~\$\s*endif.*\$\~.*", line):   # ksv endif
-        return "endif"
-    if re.match(r"\s*\~\$\s*for.*\$\~.*", line):     # ksv for
+    if re.match(r"\s*\~\$\s*for.*\$\~.*", line):   # ksv for
         return "for"
-    if re.match(r"\s*\~\$\s*endfor.*\$\~.*", line):  # ksv endfor
-        return "endfor"
+    if re.match(r"\s*\~\$\s*end.*\$\~.*", line):   # ksv end
+        return "end"
     return None
 
 
@@ -39,7 +37,7 @@ def is_meta_in_block(content: str) -> bool:
 
 def render_single_line(line: str, variables :dict) -> str:
     inline_templates: list[str] = re.findall(r"\~/.*?/\~", line)
-    exec_locals: dict = variables | locals()
+    exec_locals: dict = variables
     templated_line: str = copy.copy(line) + '\n'
 
     if len(inline_templates) > 0:
@@ -138,14 +136,60 @@ def render_substring(content: str, variables: dict) -> str:
     return rendered_content
 
 
-def render(content: str, variables: dict, filename: str=None) -> str:
-    start_time: float = time.time()
-    print_render_info_start(filename)
 
-    rendered_code: str = render_substring(content, variables)
+def templated_to_executable(content: str) -> str:
+    all_lines: list[str] = content.split('\n')[:-1]
+    executable_content: str = "KSV_RENDERED_CONTENT = ''\n"
+    depth_level: int = 0
 
-    end_time: float = time.time()
-    ellapsed_time: float = end_time - start_time
-    print_render_info_end(filename, ellapsed_time)
+    for line in all_lines:
+        meta = check_line_for_meta(line)
+        if meta is not None:
+            if meta in KSV_META_OPENINGS:
+                executable_content += ' ' * 4 * depth_level
+                executable_content += meta_to_py_line(line) + '\n'
+                depth_level += 1
+            if meta in KSV_META_CLOSURES:
+                depth_level -= 1
+        else:
+            executable_content += ' ' * 4 * depth_level
+            executable_content += f"KSV_RENDERED_CONTENT += render_single_line('''{line}''', locals())\n"
 
-    return rendered_code
+    return executable_content
+
+
+def execute_content(content: str, parameters: dict) -> str:
+    exec_locals: dict = parameters
+    exec(content, locals=exec_locals)
+    rendered_content: str = exec_locals['KSV_RENDERED_CONTENT']
+    return rendered_content
+
+
+def render(content: str, parameters: dict, filename: str=None, logging: bool = True) -> str:
+    """
+    Render the given content with KaravaiSV templating engine with the provided parameters.
+
+    This function basically is the main entry point for rendering content using the KaravaiSV templating engine.
+    It takes content via a python string and renders any KaravaiSV templating syntax found within it using the provided parameters.
+
+    Args:
+        content (str): The content to be rendered.
+        parameters (dict): A dictionary of parameters to be used in the rendering process.
+        filename (str, optional): The name of the file being rendered, used for logging purposes.
+
+    Returns:
+        str: The rendered content as a string.
+    """
+    if logging:
+        start_time: float = time.time()
+        print_render_info_start(filename)
+
+    executable_content: str = templated_to_executable(content)
+    rendered_content: str = execute_content(executable_content, parameters)
+
+    if logging:
+        end_time: float = time.time()
+        ellapsed_time: float = end_time - start_time
+        print_render_info_end(filename, ellapsed_time)
+
+    return rendered_content
