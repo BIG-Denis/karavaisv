@@ -2,6 +2,8 @@ import re
 import copy
 import time
 
+from karavaisv.util_funcs import print_render_info_start, print_render_info_end
+
 
 KSV_META_FLAGS: set[str] = {"if", "elif", "else", "endif", "for", "endfor"}
 KSV_META_OPENINGS: set[str] = {"if", "for"}
@@ -138,17 +140,12 @@ def render_substring(content: str, variables: dict) -> str:
 
 def render(content: str, variables: dict, filename: str=None) -> str:
     start_time: float = time.time()
-    if filename is not None:
-        print(f"Info: Started rendering '{filename}'...")
-    else:
-        print("Info: Started rendering...")
+    print_render_info_start(filename)
 
     rendered_code: str = render_substring(content, variables)
 
     end_time: float = time.time()
-    if filename is not None:
-        print(f"Info: Rendering of '{filename}' completed in {end_time - start_time:.2f} seconds.")
-    else:
-        print(f"Info: Rendering completed in {end_time - start_time:.2f} seconds.")
+    ellapsed_time: float = end_time - start_time
+    print_render_info_end(filename, ellapsed_time)
 
     return rendered_code
