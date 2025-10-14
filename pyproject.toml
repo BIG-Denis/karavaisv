@@ -14,7 +14,7 @@ requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
 ]
-dependencies = [] # list of dependencies if any
+dependencies = ["pyyaml"]
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
 
