@@ -10,5 +10,5 @@ def print_render_info_end(filename: str, ellapsed_time: float) -> None:
     if filename is not None:
         print(f"Info: Rendering of '{filename}' completed in {ellapsed_time:.2f} seconds.")
     else:
-        print(f"Info: Rendering completed in {end_time - start_time:.2f} seconds.")
+        print(f"Info: Rendering completed in {ellapsed_time:.2f} seconds.")
 
