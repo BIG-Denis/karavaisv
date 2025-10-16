@@ -80,5 +80,8 @@ def write_rendered_to_file(rendered_code: str, filepath: str) -> None:
     Returns:
         None
     """
+    import os
+    directory, _ = os.path.split(filepath)
+    os.makedirs(directory, exist_ok=True)
     with open(filepath, 'w') as file:
         file.write(rendered_code)
