@@ -72,26 +72,29 @@ def templated_to_executable(content: str) -> str:
             executable_content += ' ' * 4 * depth_level
             executable_content += f"KSV_RENDERED_CONTENT += render_single_line('''{line}''', locals())\n"
 
+    with open('debug_executable.py', 'w', encoding='utf-8') as f:
+        f.write(executable_content)
+
     return executable_content
 
 
-def execute_content(content: str, parameters: dict) -> str:
-    exec_locals: dict = parameters
+def execute_content(content: str, variables: dict) -> str:
+    exec_locals: dict = variables
     exec(content, locals=exec_locals)
     rendered_content: str = exec_locals['KSV_RENDERED_CONTENT']
     return rendered_content
 
 
-def render(content: str, parameters: dict, logging: bool = True, filepath: str=None) -> str:
+def render(content: str, variables: dict, logging: bool = True, filepath: str=None) -> str:
     """
-    Render the given content with KaravaiSV templating engine with the provided parameters.
+    Render the given content with KaravaiSV templating engine with the provided python variables.
 
     This function basically is the main entry point for rendering content using the KaravaiSV templating engine.
-    It takes content via a python string and renders any KaravaiSV templating syntax found within it using the provided parameters.
+    It takes content via a python string and renders any KaravaiSV templating syntax found within it using the provided python variables.
 
     Args:
         content (str): The content to be rendered.
-        parameters (dict): A dictionary of parameters to be used in the rendering process.
+        variables (dict): A dictionary of variables to be used in the rendering process.
         logging (bool, optional): If True, logs the rendering process and time taken. Defaults to True.
         filepath (str, optional): The path to the file being rendered, used for logging purposes. Defaults to None. Makes sense only if logging is True.
 
@@ -103,7 +106,7 @@ def render(content: str, parameters: dict, logging: bool = True, filepath: str=N
         print_render_info_start(filepath)
 
     executable_content: str = templated_to_executable(content)
-    rendered_content: str = execute_content(executable_content, parameters)
+    rendered_content: str = execute_content(executable_content, variables)
 
     if logging:
         end_time: float = time.time()
