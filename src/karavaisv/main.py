@@ -15,9 +15,7 @@ def main():
     content = read_source_from_file(input_file)
 
     parameters: dict = {}
-    if parameters_file is None:
-        parameters = {}
-    else:
+    if parameters_file is not None:
         parameters = read_params_from_yaml(parameters_file)
 
     rendered_content: str = render(content, parameters, logging=enable_logging, filepath=input_file)
