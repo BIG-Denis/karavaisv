@@ -5,28 +5,36 @@ import time
 from .util_funcs import print_render_info_start, print_render_info_end
 
 
-KSV_META_FLAGS: set[str] = {"if", "elif", "else", "for", "end"}
-KSV_META_OPENINGS: set[str] = {"if", "for"}
-KSV_META_CLOSURES: set[str] = {"end",}
-KSV_META_COLONS: set[str] = {"if", "elif", "else", "for"}
+KSV_METAS: set[str] = {"if", "elif", "else", "for", "while", "with", "match", "case", "universal_indent_down",}
+KSV_METAS_INDENT_UP: set[str] = {"if", "for", "while", "with", "match", "case",}
+KSV_METAS_INDENT_STAY: set[str] = {"elif", "else",}
+KSV_METAS_INDENT_DOWN: set[str] = {"universal_indent_down",}
 
 
-def check_line_for_meta(line: str) -> str:
-    if re.match(r"\s*\~\$\s*if.*\$\~.*", line):    # ksv if
+def check_line_for_meta(line: str) -> str | None:
+    if re.match(r"\s*<\$\s*if.*\$>.*", line):     # ksv if
         return "if"
-    if re.match(r"\s*\~\$\s*elif.*\$\~.*", line):  # ksv elif
+    if re.match(r"\s*<\$\s*elif.*\$>.*", line):   # ksv elif
         return "elif"
-    if re.match(r"\s*\~\$\s*else.*\$\~.*", line):  # ksv else
+    if re.match(r"\s*<\$\s*else.*\$>.*", line):   # ksv else
         return "else"
-    if re.match(r"\s*\~\$\s*for.*\$\~.*", line):   # ksv for
+    if re.match(r"\s*<\$\s*for.*\$>.*", line):    # ksv for
         return "for"
-    if re.match(r"\s*\~\$\s*end.*\$\~.*", line):   # ksv end
-        return "end"
+    if re.match(r"\s*<\$\s*while.*\$>.*", line):  # ksv while
+        return "while"
+    if re.match(r"\s*<\$\s*with.*\$>.*", line):   # ksv with
+        return "with"
+    if re.match(r"\s*<\$\s*match.*\$>.*", line):  # ksv match
+        return "match"
+    if re.match(r"\s*<\$\s*case.*\$>.*", line):   # ksv case
+        return "case"
+    if re.match(r"\s*<\$\s*end.*\$>.*", line):    # ksv universal_indent_down ('end*' keyword)
+        return "universal_indent_down"
     return None
 
 
 def render_single_line(line: str, variables :dict) -> str:
-    inline_templates: list[str] = re.findall(r"\~/.*?/\~", line)
+    inline_templates: list[str] = re.findall(r"</.*?/>", line)
     exec_locals: dict = variables
     templated_line: str = copy.copy(line) + '\n'
 
@@ -41,15 +49,11 @@ def render_single_line(line: str, variables :dict) -> str:
 def meta_to_py_line(line: str) -> str:
     converted_line: str = copy.copy(line)
 
-    beginning_meta: list[str] = re.findall(r"^\s*\~\$\s*", line)
-    trailing_meta: list[str] = re.findall(r"\s*\$\~.*$", line)
-    add_colon: bool = check_line_for_meta(line) in KSV_META_COLONS
+    beginning_meta: list[str] = re.findall(r"^\s*<\$\s*", line)
+    trailing_meta: list[str] = re.findall(r"\s*\$>.*$", line)
 
     converted_line = converted_line.replace(beginning_meta[0], '')
     converted_line = converted_line.replace(trailing_meta[0], '')
-
-    if add_colon:
-        converted_line += ':'
 
     return converted_line
 
@@ -62,18 +66,20 @@ def templated_to_executable(content: str) -> str:
     for line in all_lines:
         meta = check_line_for_meta(line)
         if meta is not None:
-            if meta in KSV_META_OPENINGS:
+            if meta in KSV_METAS_INDENT_UP:
                 executable_content += ' ' * 4 * depth_level
                 executable_content += meta_to_py_line(line) + '\n'
                 depth_level += 1
-            if meta in KSV_META_CLOSURES:
+
+            elif meta in KSV_METAS_INDENT_STAY:
+                executable_content += ' ' * 4 * ( depth_level - 1 )
+                executable_content += meta_to_py_line(line) + '\n'
+
+            if meta in KSV_METAS_INDENT_DOWN:
                 depth_level -= 1
         else:
             executable_content += ' ' * 4 * depth_level
             executable_content += f"KSV_RENDERED_CONTENT += render_single_line('''{line}''', locals())\n"
-
-    with open('debug_executable.py', 'w', encoding='utf-8') as f:
-        f.write(executable_content)
 
     return executable_content
 
@@ -85,7 +91,7 @@ def execute_content(content: str, variables: dict) -> str:
     return rendered_content
 
 
-def render(content: str, variables: dict, logging: bool = True, filepath: str=None) -> str:
+def render(content: str, variables: dict, logging: bool=True, filepath: str=None) -> str:
     """
     Render the given content with KaravaiSV templating engine with the provided python variables.
 
