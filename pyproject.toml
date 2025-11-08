@@ -19,7 +19,8 @@ license = "MIT"
 license-files = ["LICEN[CS]E*"]
 
 [project.scripts]
-ksv = "src.main:main"
+ksv = "karavaisv.main:main"
+karavaisv = "karavaisv.main:main"
 
 [project.urls]
 Homepage = "https://github.com/BIG-Denis/karavaisv"
