@@ -30,7 +30,7 @@ def check_line_for_meta(line: str) -> str | None:
         return "case"
     if re.match(r"\s*<\$\s*end.*\$>.*", line):    # ksv universal_indent_down ('end*' keyword)
         return "universal_indent_down"
-    if re.match(r"\s*<\$.*\$>.*"):
+    if re.match(r"\s*<\$.*\$>.*", line):          # ksv universal_calc (any non-control python code)
         return "universal_calc"
     return None
 
