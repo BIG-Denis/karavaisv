@@ -7,7 +7,7 @@ from .util_funcs import print_render_info_start, print_render_info_end
 
 KSV_METAS: set[str] = {"if", "elif", "else", "for", "while", "with", "match", "case", "universal_indent_down",}
 KSV_METAS_INDENT_UP: set[str] = {"if", "for", "while", "with", "match", "case",}
-KSV_METAS_INDENT_STAY: set[str] = {"elif", "else",}
+KSV_METAS_INDENT_STAY: set[str] = {"elif", "else", "universal_calc",}
 KSV_METAS_INDENT_DOWN: set[str] = {"universal_indent_down",}
 
 
@@ -30,17 +30,19 @@ def check_line_for_meta(line: str) -> str | None:
         return "case"
     if re.match(r"\s*<\$\s*end.*\$>.*", line):    # ksv universal_indent_down ('end*' keyword)
         return "universal_indent_down"
+    if re.match(r"\s*<\$.*\$>.*", line):          # ksv universal_calc (any non-control python code)
+        return "universal_calc"
     return None
 
 
 def render_single_line(line: str, variables :dict) -> str:
-    inline_templates: list[str] = re.findall(r"</.*?/>", line)
+    inline_templates: list[str] = re.findall(r"</\s*.*?\s*/>", line)
     exec_locals: dict = variables
     templated_line: str = copy.copy(line) + '\n'
 
     if len(inline_templates) > 0:
         for inline_template in inline_templates:
-            exec(f"templated_line = str({inline_template[3:-3]})", locals=exec_locals)
+            exec(f"templated_line = str({inline_template[2:-2]})", locals=exec_locals)
             templated_line = templated_line.replace(inline_template, exec_locals['templated_line'])
 
     return templated_line

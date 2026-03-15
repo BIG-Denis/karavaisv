@@ -324,7 +324,7 @@ Source code:
 // assertions
 
 <$   for port in input_ports: $>
-assert property (@(posedge clk) disable iff ~rstn !$is_unknown(</ port['name'] />_valid_i) ) else $error("</ port['name'] />_valid_i should be always known!");
+assert property (@(posedge clk) disable iff (!rstn) !$isunknown(</ port['name'] />_valid_i) ) else $error("</ port['name'] />_valid_i should be always known!");
 <$   end                      $>
 <$ end            $>
 ```
@@ -347,9 +347,9 @@ Rendered code:
 ```systemverilog
 // assertions
 
-assert property (@(posedge clk) disable iff ~rstn !$is_unknown(n1_valid_i) ) else $error("n1_valid_i should be always known!");
-assert property (@(posedge clk) disable iff ~rstn !$is_unknown(n2_valid_i) ) else $error("n2_valid_i should be always known!");
-assert property (@(posedge clk) disable iff ~rstn !$is_unknown(n3_valid_i) ) else $error("n3_valid_i should be always known!");
+assert property (@(posedge clk) disable iff (!rstn) !$isunknown(n1_valid_i) ) else $error("n1_valid_i should be always known!");
+assert property (@(posedge clk) disable iff (!rstn) !$isunknown(n2_valid_i) ) else $error("n2_valid_i should be always known!");
+assert property (@(posedge clk) disable iff (!rstn) !$isunknown(n3_valid_i) ) else $error("n3_valid_i should be always known!");
 ```
 
 ### Usage with non-sv files
