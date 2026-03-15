@@ -7,7 +7,7 @@ from .util_funcs import print_render_info_start, print_render_info_end
 
 KSV_METAS: set[str] = {"if", "elif", "else", "for", "while", "with", "match", "case", "universal_indent_down",}
 KSV_METAS_INDENT_UP: set[str] = {"if", "for", "while", "with", "match", "case",}
-KSV_METAS_INDENT_STAY: set[str] = {"elif", "else",}
+KSV_METAS_INDENT_STAY: set[str] = {"elif", "else", "universal_calc",}
 KSV_METAS_INDENT_DOWN: set[str] = {"universal_indent_down",}
 
 
@@ -30,6 +30,8 @@ def check_line_for_meta(line: str) -> str | None:
         return "case"
     if re.match(r"\s*<\$\s*end.*\$>.*", line):    # ksv universal_indent_down ('end*' keyword)
         return "universal_indent_down"
+    if re.match(r"\s*<\$.*\$>.*"):
+        return "universal_calc"
     return None
 
 
