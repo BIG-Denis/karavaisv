@@ -7,7 +7,8 @@ from .util_funcs import print_render_info_start, print_render_info_end
 
 KSV_METAS: set[str] = {"if", "elif", "else", "for", "while", "with", "match", "case", "universal_indent_down",}
 KSV_METAS_INDENT_UP: set[str] = {"if", "for", "while", "with", "match", "case",}
-KSV_METAS_INDENT_STAY: set[str] = {"elif", "else", "universal_calc",}
+KSV_METAS_INDENT_WAVY_STAY: set[str] = {"elif", "else",}
+KSV_METAS_INDENT_STRONG_STAY: set[str] = {"universal_calc",}
 KSV_METAS_INDENT_DOWN: set[str] = {"universal_indent_down",}
 
 
@@ -73,8 +74,12 @@ def templated_to_executable(content: str) -> str:
                 executable_content += meta_to_py_line(line) + '\n'
                 depth_level += 1
 
-            elif meta in KSV_METAS_INDENT_STAY:
+            elif meta in KSV_METAS_INDENT_WAVY_STAY:
                 executable_content += ' ' * 4 * ( depth_level - 1 )
+                executable_content += meta_to_py_line(line) + '\n'
+
+            elif meta in KSV_METAS_INDENT_STRONG_STAY:
+                executable_content += ' ' * 4 * depth_level
                 executable_content += meta_to_py_line(line) + '\n'
 
             if meta in KSV_METAS_INDENT_DOWN:
